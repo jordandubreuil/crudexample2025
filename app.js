@@ -1,11 +1,13 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser")
+const path = require("path")
 
 const app = express();
 const port = process.env.port||3000;
 
-
+//Create public folder as static
+app.use(express.static(path.join(__dirname,"public")));
 
 //Set up middleware to parse json requests
 app.use(bodyParser.json());
@@ -33,7 +35,7 @@ const Person = mongoose.model("Person", peopleSchema, "peopledata");
   
 //App Routes
 app.get("/", (req,res)=>{
-    res.send("Server is working.");
+    res.sendFile("index.html");
 });
 
 //Read routes
@@ -66,7 +68,8 @@ app.post("/addperson", async (req, res)=>{
     try{
         const newPerson = new Person(req.body);
         const savePerson = await newPerson.save();
-        res.status(201).json(savePerson);
+        //res.status(201).json(savePerson);
+        res.redirect("/");
         console.log(savePerson);
     }catch(err){
         res.status(501).json({error:"Failed to add new person."});
