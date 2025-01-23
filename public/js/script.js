@@ -10,7 +10,7 @@ const fetchUsers = async ()=>{
 
         //Parse json
         const users = await response.json();
-
+        console.log(users);
         //Format the data to html
         userContainer.innerHTML = "";
 
