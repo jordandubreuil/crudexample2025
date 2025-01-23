@@ -5,8 +5,11 @@ const bodyParser = require("body-parser")
 const app = express();
 const port = process.env.port||3000;
 
+
+
 //Set up middleware to parse json requests
 app.use(bodyParser.json());
+app.use(express.urlencoded({extended:true}));
 
 //MongoDB connection setup
 const mongoURI = "mongodb://localhost:27017/crudapp";
@@ -33,6 +36,7 @@ app.get("/", (req,res)=>{
     res.send("Server is working.");
 });
 
+//Read routes
 app.get("/people", async (req, res)=>{
     try{
         const people = await Person.find();
@@ -54,6 +58,53 @@ app.get("/people/:id", async (req,res)=>{
 
     }catch(err){
         res.status(500).json({error:"Failed to get person."});
+    }
+});
+
+//Create routes
+app.post("/addperson", async (req, res)=>{
+    try{
+        const newPerson = new Person(req.body);
+        const savePerson = await newPerson.save();
+        res.status(201).json(savePerson);
+        console.log(savePerson);
+    }catch(err){
+        res.status(501).json({error:"Failed to add new person."});
+    }
+});
+
+//Update Route
+app.put("/updateperson/:id", (req,res)=>{
+    //Example of a promise statement for async fucntion
+    Person.findByIdAndUpdate(req.params.id, req.body, {
+        new:true,
+        runValidators:true
+    }).then((updatedPerson)=>{
+        if(!updatedPerson){
+            return res.status().json({error:"Failed to find person."});
+        }
+        res.json(updatedPerson);
+    }).catch((err)=>{
+        res.status(400).json({error:"Failed to update the person."});
+    });
+});
+
+//Delete route
+app.delete("/deleteperson/firstname", async (req,res)=>{
+    try{
+        const personname = req.query;
+        const person = await Person.find(personname);
+
+        if(person.length === 0){
+            return res.status(404).json({error:"Failed to find the person."});
+        }
+
+        const deletedPerson = await Person.findOneAndDelete(personname);
+        res.json({message:"Person deleted Successfully"});
+
+    }catch(err){
+        console.log(err);
+        res.status(404).json({error:"Person not found"});
     }
 });
 
