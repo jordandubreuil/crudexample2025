@@ -1,7 +1,9 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const bodyParser = require("body-parser")
-const path = require("path")
+const bodyParser = require("body-parser");
+const path = require("path");
+const session = require("express-session");
+const bcrypt = require("bcryptjs");
 
 const app = express();
 const port = process.env.port||3000;
@@ -12,6 +14,26 @@ app.use(express.static(path.join(__dirname,"public")));
 //Set up middleware to parse json requests
 app.use(bodyParser.json());
 app.use(express.urlencoded({extended:true}));
+
+//sets up the session variable
+app.use(session({
+    secret:"12345",
+    resave:false,
+    saveUninitialized:false,
+    cookie:{secure:false}// Set to true is using https
+}));
+
+//Create a fake user in our database
+const user = {
+    admin:bcrypt.hashSync("12345", 10)
+}
+
+function isAuthenticated(req,res, next){
+    if(req.session.user)return next;
+    res.redirect("/login");
+}
+
+
 
 //MongoDB connection setup
 const mongoURI = "mongodb://localhost:27017/crudapp";
@@ -34,9 +56,19 @@ const peopleSchema = new mongoose.Schema({
 const Person = mongoose.model("Person", peopleSchema, "peopledata");
   
 //App Routes
-app.get("/", (req,res)=>{
+
+
+app.get("/",(req,res)=>{
     res.sendFile("index.html");
 });
+
+app.get("/users",isAuthenticated, (req,res)=>{
+    res.send("users.html");
+});
+
+app.get("/login", (req,res)=>{
+    res.sendFile(path.join(__dirname  + "/public/login.html"));
+})
 
 //Read routes
 app.get("/people", async (req, res)=>{
@@ -74,6 +106,17 @@ app.post("/addperson", async (req, res)=>{
     }catch(err){
         res.status(501).json({error:"Failed to add new person."});
     }
+});
+
+app.post("/login", (req,res)=>{
+    const {username, password} = req.body;
+    console.log(req.body);
+    if(user[username] && bcrypt.compareSync(password, user[username])){
+        req.session.user = username;
+        res.redirect("/users");
+    }
+    req.session.error = "Invalid User";
+    res.redirect("/login")
 });
 
 //Update Route
