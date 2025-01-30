@@ -29,8 +29,8 @@ const user = {
 }
 
 function isAuthenticated(req,res, next){
-    if(req.session.user)return next;
-    res.redirect("/login");
+    if(req.session.user)return next();
+    return res.redirect("/login");
 }
 
 
@@ -63,7 +63,7 @@ app.get("/",(req,res)=>{
 });
 
 app.get("/users",isAuthenticated, (req,res)=>{
-    res.send("users.html");
+    res.sendFile(path.join(__dirname, "public", "users.html"));
 });
 
 app.get("/login", (req,res)=>{
@@ -113,10 +113,10 @@ app.post("/login", (req,res)=>{
     console.log(req.body);
     if(user[username] && bcrypt.compareSync(password, user[username])){
         req.session.user = username;
-        res.redirect("/users");
+        return res.redirect("/users");
     }
     req.session.error = "Invalid User";
-    res.redirect("/login")
+    return res.redirect("/login")
 });
 
 //Update Route
