@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
@@ -5,7 +6,8 @@ const path = require("path");
 const session = require("express-session");
 const bcrypt = require("bcryptjs");
 const User = require("./models/User");
-const Person = require("./models/Person");
+
+
 const { register } = require("module");
 
 const app = express();
@@ -20,7 +22,7 @@ app.use(express.urlencoded({extended:true}));
 
 //sets up the session variable
 app.use(session({
-    secret:"12345",
+    secret:process.env.SESSION_SECRET,
     resave:false,
     saveUninitialized:false,
     cookie:{secure:false}// Set to true is using https
@@ -39,7 +41,7 @@ function isAuthenticated(req,res, next){
 
 
 //MongoDB connection setup
-const mongoURI = "mongodb://localhost:27017/crudapp";
+const mongoURI = process.env.MONGODB_URI;//"mongodb://localhost:27017/crudapp";
 mongoose.connect(mongoURI);
 
 const db = mongoose.connection;
@@ -187,3 +189,5 @@ app.delete("/deleteperson/firstname", async (req,res)=>{
 app.listen(port, ()=>{
     console.log(`Server is running on port ${port}`);
 });
+
+module.exports = app;
